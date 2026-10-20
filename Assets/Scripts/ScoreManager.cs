@@ -38,8 +38,9 @@ public class ScoreManager : MonoBehaviour
         }
 
 
-        // Otherwise, this is the one and only ScoreManager
+        // Keep this GameObject when loading another scene
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
 
@@ -50,5 +51,12 @@ public class ScoreManager : MonoBehaviour
 
         // Print the new total to the Console window
         Debug.Log("Score: " + Score);
+    }
+
+    // Resets the score when starting a new game
+    public void ResetScore()
+    {
+        Score = 0;
+        FinalScore = 0;
     }
 }

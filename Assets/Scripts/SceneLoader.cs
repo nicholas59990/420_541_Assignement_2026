@@ -15,4 +15,10 @@ public class SceneLoader : MonoBehaviour
         // Tells Editor game is not playing so stop 
         UnityEditor.EditorApplication.isPlaying = false;
     }
+
+    public void StartNewGame()
+    {
+        ScoreManager.Instance.ResetScore();
+        SceneManager.LoadScene("LevelOne");
+    }
 }
