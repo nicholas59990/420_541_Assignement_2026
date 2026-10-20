@@ -9,5 +9,9 @@ public class EndScreen : MonoBehaviour
     void Start()
     {
         finalScoreText.text = "Final Score: " + ScoreManager.FinalScore;
+
+        // Show and unlock the mouse for the end screen
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 }
