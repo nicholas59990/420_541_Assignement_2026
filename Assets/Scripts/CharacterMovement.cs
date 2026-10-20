@@ -6,8 +6,11 @@ public class CharacterMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 7f;      // units per second
+    [SerializeField] private float sprintSpeed = 14f;   // units per second
     [SerializeField] private float turnSpeed = 150f;    // degrees per second
-    [SerializeField] private float jumpForce = 5f;      // strength of the jump
+    [SerializeField] private float jumpForce = 5f;      // strength of the jump (Min Jump Force)
+    [SerializeField] private float maxJumpForce = 12f;  // Strongest jump force (after 3 seconds)
+    [SerializeField] private float maxJumpChargeTime = 3f; // Max time required to charge the jump
    [SerializeField] private float doubleJumpForce = 4f;
     [Header("Ground Check Settings")]
     [SerializeField] private float groundDistance = 0.5f; // ray length
@@ -16,10 +19,12 @@ public class CharacterMovement : MonoBehaviour
     private Rigidbody rb;               // the physics body we move
     private Vector3 moveDirection;      // worked out from input in Update()
     private float turnInput;            // horizontal input for rotation
+    private float jumpHoldTime = 0f;    // Track how long Space has been held
     private bool isGrounded;            // true when standing on the ground
     private bool jumpRequested = false; // set in Update(), used later
     private bool doubleJumpRequested = false; // set in TryDoubleJump()
     private bool hasDoubleJumped = false;     // one per jump
+    private bool isChargingJump = false; // Tracks whether player is currently charging a jump
 
     public bool IsGrounded => isGrounded;
 
@@ -36,7 +41,8 @@ public class CharacterMovement : MonoBehaviour
     private void Update()
     {
         // 1. Ground Check
-        isGrounded = Physics.Raycast(transform.position + transform.up*groundDistance/2, -transform.up, groundDistance, groundMask);
+        isGrounded = Physics.Raycast(  transform.position + transform.up*groundDistance/2, -transform.up, groundDistance, groundMask);
+        //Debug.Log("IsGrounded: " + isGrounded);
 
         // Back on the ground: the double jump is available again
         if (isGrounded)
@@ -51,7 +57,7 @@ public class CharacterMovement : MonoBehaviour
 
 
         Vector3 cameraForward = Camera.main.transform.forward;
-        Vector3 cameraRight = Camera.main.transform.forward;
+        Vector3 cameraRight = Camera.main.transform.right;
 
         cameraForward.y = 0.0f;
         cameraRight.y = 0.0f;
@@ -70,9 +76,42 @@ public class CharacterMovement : MonoBehaviour
         }
 
         // 3. Handle Jump Input
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        // Start changing when Space is pressed while grounded
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !isChargingJump)
+        {
+            isChargingJump = true;
+            jumpHoldTime = 0f; // start the charge timer at zero
+        }
+
+        // Increase charge time while Space is held
+        if (isChargingJump && Input.GetKey(KeyCode.Space))
+        {
+            jumpHoldTime += Time.deltaTime;
+
+            // If the max charge time is reached jump automatically
+            if (jumpHoldTime >= maxJumpChargeTime)
+            {
+                jumpHoldTime = maxJumpChargeTime; // do not change beyond the max
+                jumpRequested = true; // request a jump in FixedUpdate
+                isChargingJump = false; // Stop charging
+            }
+        }
+
+        // Jump immediately if Space is released early
+        if (isChargingJump && Input.GetKeyUp(KeyCode.Space))
         {
             jumpRequested = true;
+            isChargingJump = false;
+        }
+
+        // Sprint while Shift is held and the players is grounded
+        if ((Input.GetKey(KeyCode.LeftShift) || Input.GetKey(KeyCode.RightShift)) && isGrounded)
+        {
+            moveSpeed = sprintSpeed;
+        }
+        else
+        {
+            moveSpeed = 7f;
         }
     }
 
@@ -80,13 +119,29 @@ public class CharacterMovement : MonoBehaviour
     {
         MovePlayer();
  
+        // Calculate jump strength from the time Space was held
         if (jumpRequested)
         {
-            Jump(jumpForce);
+            // Convert charge time to a value between 0 - 1
+            // 0 = No Charge & 1 = Max Charge
+            float charge = Mathf.Clamp01(jumpHoldTime / maxJumpChargeTime);
+
+            // Interpolate between the minimum and maximum jump forces.
+            // Short hold = closer to jumpForce; long hold = closer to maxJumpForce.
+            // Mathf.Lerp is Unity's function for calculating this value.
+            float currentJumpForce = Mathf.Lerp(jumpForce, maxJumpForce, charge);
+
+            // Perform the jump using the calculated force
+            Jump(currentJumpForce);
+
+            // Reset the request so it is not processed repeatedly
             jumpRequested = false;
+
+            // Reset the charge timer for the next jump
+            jumpHoldTime = 0f;
         }
  
-        // NEW: the second jump, in mid-air
+        // The second jump, in mid-air
         if (doubleJumpRequested)
         {
             Jump(doubleJumpForce);

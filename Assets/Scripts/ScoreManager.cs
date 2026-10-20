@@ -48,7 +48,6 @@ public class ScoreManager : MonoBehaviour
     {
         Score += amount;
 
-
         // Print the new total to the Console window
         Debug.Log("Score: " + Score);
     }

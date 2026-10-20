@@ -1,0 +1,60 @@
+using UnityEngine;
+
+// Gives the player a speed boost for a limited time
+public class PlayerPowerUps : MonoBehaviour
+{
+
+    [SerializeField] private float boostMultiplier = 1.5f; // 50% faster
+
+    // Seconds of boost left. The HUD reads it; only this script changes it
+    public float SpeedTimeLeft {get; private set;}
+    public float ScoreTimeLeft {get; private set;}
+    public float ScoreMultiplier {get; private set;} = 1;
+
+    private CharacterMovement movement;
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private void Start()
+    {
+        movement = GetComponent<CharacterMovement>();
+    }
+
+    // Activates boost
+    public void ActivateSpeedBoost(float duration) 
+    {
+        SpeedTimeLeft = duration;
+        movement.SpeedMultiplier = boostMultiplier;
+    }
+
+    // Activates double points
+    public void ActivateScoreBoost(float duration)
+    {
+        ScoreTimeLeft = duration;
+        ScoreMultiplier = 2;
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (SpeedTimeLeft <= 0f) return; // No boost running
+
+        SpeedTimeLeft -= Time.deltaTime;
+
+        if (SpeedTimeLeft <= 0f) 
+        {
+            movement.SpeedMultiplier = 1f; // Back to normal speed
+        }
+
+        // Count down the score boost
+        if (ScoreTimeLeft > 0f)
+        {
+            ScoreTimeLeft -= Time.deltaTime;
+
+            if (ScoreTimeLeft <= 0f)
+            {
+                ScoreTimeLeft = 0f;
+                ScoreMultiplier = 1;
+            }
+        }
+    }
+}
