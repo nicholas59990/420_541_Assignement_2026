@@ -15,7 +15,7 @@ public class ScoreBoostPickup : MonoBehaviour
         PlayerPowerUps powerUps = other.GetComponent<PlayerPowerUps>();
         if (powerUps == null) return;
 
-        powerUps.ActivateSpeedBoost(duration);
+        powerUps.ActivateScoreBoost(duration);
 
         // Sound and particles
         GetComponent<AudioSource>().PlayOneShot(pickupSound);

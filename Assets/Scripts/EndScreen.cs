@@ -10,10 +10,4 @@ public class EndScreen : MonoBehaviour
     {
         finalScoreText.text = "Final Score: " + ScoreManager.FinalScore;
     }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }

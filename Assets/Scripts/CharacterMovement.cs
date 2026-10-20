@@ -18,13 +18,13 @@ public class CharacterMovement : MonoBehaviour
 
     private Rigidbody rb;               // the physics body we move
     private Vector3 moveDirection;      // worked out from input in Update()
-    private float turnInput;            // horizontal input for rotation
     private float jumpHoldTime = 0f;    // Track how long Space has been held
     private bool isGrounded;            // true when standing on the ground
     private bool jumpRequested = false; // set in Update(), used later
     private bool doubleJumpRequested = false; // set in TryDoubleJump()
     private bool hasDoubleJumped = false;     // one per jump
     private bool isChargingJump = false; // Tracks whether player is currently charging a jump
+    private PlayerPowerUps powerUps; // Used to check if the double jump is unlocked
 
     public bool IsGrounded => isGrounded;
 
@@ -36,13 +36,13 @@ public class CharacterMovement : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotation;
+        powerUps = GetComponent<PlayerPowerUps>();
     }
 
     private void Update()
     {
         // 1. Ground Check
         isGrounded = Physics.Raycast(  transform.position + transform.up*groundDistance/2, -transform.up, groundDistance, groundMask);
-        //Debug.Log("IsGrounded: " + isGrounded);
 
         // Back on the ground: the double jump is available again
         if (isGrounded)
@@ -170,11 +170,18 @@ public class CharacterMovement : MonoBehaviour
     // Returns true if the double jump really happened.
     public bool TryDoubleJump()
     {
+
+        // Locked unless the blue pickup is active
+        if (powerUps == null || !powerUps.DoubleJumpActive) return false;
+
         // Not allowed on the ground, or if it was already used
         if (isGrounded || hasDoubleJumped) return false;
  
         doubleJumpRequested = true;
         hasDoubleJumped = true;
+
+        // Play the double jump sound
+        powerUps.PlayDoubleJumpSound();
         return true;
     }
 }

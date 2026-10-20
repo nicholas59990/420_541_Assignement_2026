@@ -13,17 +13,16 @@ public class PlayerPowerUps : MonoBehaviour
     public float ScoreMultiplier {get; private set;} = 1;
 
     private CharacterMovement movement;
-    private float doubleJumpEndTime;
+    private float doubleJumpEndTime; // game time when the double jump runs out
 
+    // Is the double jump unlocked right now? (true = yes, false = no)
+    // It checks the clock every time another script asks.
+    // Time.time = seconds since the game started
+    // doubleJumpEndTime = the moment the power up runs out
+    // Still before that moment = true. After it = false.
     public bool DoubleJumpActive => Time.time < doubleJumpEndTime;
 
     private void Awake()
-    {
-        movement = GetComponent<CharacterMovement>();
-    }
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    private void Start()
     {
         movement = GetComponent<CharacterMovement>();
     }
@@ -48,25 +47,26 @@ public class PlayerPowerUps : MonoBehaviour
         doubleJumpEndTime = Time.time + duration;
     }
 
+    // Called by CharacterMovement when a double jump really happens
+    public void PlayDoubleJumpSound()
+    {
+    if (doubleJumpSound != null)
+        AudioSource.PlayClipAtPoint(doubleJumpSound, transform.position);
+    }
+
     // Update is called once per frame
     void Update()
     {
-        if (SpeedTimeLeft <= 0f) return; // No boost running
-
-        SpeedTimeLeft -= Time.deltaTime;
-
-        if (SpeedTimeLeft <= 0f) 
+        if (SpeedTimeLeft > 0f) // No boost running
         {
-            movement.SpeedMultiplier = 1f; // Back to normal speed
-        }
+            SpeedTimeLeft -= Time.deltaTime;
 
-    if (DoubleJumpActive && Input.GetKeyDown(KeyCode.Space))
-    {
-        if (movement.TryDoubleJump() && doubleJumpSound != null)
-        {
-            AudioSource.PlayClipAtPoint(doubleJumpSound, transform.position);
+            if (SpeedTimeLeft <= 0f) 
+            {
+                SpeedTimeLeft = 0f;
+                movement.SpeedMultiplier = 1f; // Back to normal speed
+            }
         }
-    }
 
         // Count down the score boost
         if (ScoreTimeLeft > 0f)
