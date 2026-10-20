@@ -5,6 +5,7 @@ public class PlayerPowerUps : MonoBehaviour
 {
 
     [SerializeField] private float boostMultiplier = 1.5f; // 50% faster
+    [SerializeField] private AudioClip doubleJumpSound;
 
     // Seconds of boost left. The HUD reads it; only this script changes it
     public float SpeedTimeLeft {get; private set;}
@@ -12,6 +13,14 @@ public class PlayerPowerUps : MonoBehaviour
     public float ScoreMultiplier {get; private set;} = 1;
 
     private CharacterMovement movement;
+    private float doubleJumpEndTime;
+
+    public bool DoubleJumpActive => Time.time < doubleJumpEndTime;
+
+    private void Awake()
+    {
+        movement = GetComponent<CharacterMovement>();
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Start()
@@ -33,6 +42,12 @@ public class PlayerPowerUps : MonoBehaviour
         ScoreMultiplier = 2;
     }
 
+    // Activates 30 Sec Jump
+    public void ActivateDoubleJump(float duration)
+    {
+        doubleJumpEndTime = Time.time + duration;
+    }
+
     // Update is called once per frame
     void Update()
     {
@@ -44,6 +59,14 @@ public class PlayerPowerUps : MonoBehaviour
         {
             movement.SpeedMultiplier = 1f; // Back to normal speed
         }
+
+    if (DoubleJumpActive && Input.GetKeyDown(KeyCode.Space))
+    {
+        if (movement.TryDoubleJump() && doubleJumpSound != null)
+        {
+            AudioSource.PlayClipAtPoint(doubleJumpSound, transform.position);
+        }
+    }
 
         // Count down the score boost
         if (ScoreTimeLeft > 0f)
